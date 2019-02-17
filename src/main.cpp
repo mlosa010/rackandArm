@@ -42,7 +42,7 @@ grabber=handClosed;
   startInterval=millis();
   if(millis()-startInterval>=elapesdTime){
     grabber=rackUp;
-  }else{
+  }else if(millis()-startInterval<elapesdTime){
   Baseservo.write(90);
   Rackservo.write(90);
   Handservo.write(180);

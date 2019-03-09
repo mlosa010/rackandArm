@@ -39,16 +39,17 @@ void grabbingRoutine() {
         PORTD |= (1<<PD4);//digitalWrite(4,HIGH);
         BaseservoR.write(90);
         BaseservoL.write(90);//still
-        Rackservo.write(180);//rack down
+        Rackservo.write(0);//rack down
         Handservo.write(90);//still
-      } while (bit_is_set(PIND, PD3));
+      } while (bit_is_clear(PIND, PD3));
       startInterval = millis();
+      PORTD &= ~(1<<PD4);
       grabber = handClosed;
       break;
 
     case handClosed:
       do {
-        PORTD &= ~(1<<PD4);
+
         BaseservoL.write(90);
         BaseservoR.write(90);
         Rackservo.write(90);
@@ -61,9 +62,9 @@ void grabbingRoutine() {
         PORTD |= (1<<PD4);
         BaseservoL.write(90);
         BaseservoR.write(90);//still
-        Rackservo.write(0);//rack up
+        Rackservo.write(180);//rack up
         Handservo.write(90);//still
-      } while (bit_is_set(PIND, PD2));
+      } while (bit_is_clear(PIND, PD2));
       grabber = baseIn;
 
       break;

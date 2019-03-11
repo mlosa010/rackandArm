@@ -39,8 +39,8 @@ void setup() {
     DDRD |= ((1<<PD4)|(1<<PD5));
     PORTD &= ~((1<<PD4)|(1<<PD5));
     PORTD |= ((1<<PD2)|(1<<PD3));
-    DDRC &= ~((1<< PC0)|(1<<PC1));
-    PORTC |= ((1 << PC0)|(1<<PC1));
+    DDRC &= ~((1<< PC0)|(1<<PC1)|(1<<PC2));
+    PORTC |= ((1 << PC0)|(1<<PC1)|(1<<PC2));
 }
 void resetState()
 {
@@ -73,7 +73,7 @@ void loop() {
 //for those who dont know inline functions are simple code repacements like #defines
 //but they look like functions
 inline void BASEOUTE(){
-  BaseservoL.attach(10);
+  BaseservoL.attach(11);
   do {
     BaseservoL.write(180);
   } while (bit_is_set(PINC, PC1));
@@ -81,10 +81,10 @@ inline void BASEOUTE(){
   grabber = RackDown;
 }
 inline void RACKDOWN(){
-  Rackservo.attach(11);
+  Rackservo.attach(10);
   do {
     Rackservo.writeMicroseconds(2400);
-  } while (bit_is_set(PIND, PD3));
+  } while (bit_is_set(PINC, PC2));
   Rackservo.detach();
   startInterval = millis();
   grabber = handClosed;
@@ -94,10 +94,11 @@ inline void HANDCLOSED(){
   do {
     Handservo.write(0);
   } while (millis() - startInterval < elapesdTime);
+  Handservo.detach();
   grabber = rackUp;
 }
 inline void RACKUP(){
-  Rackservo.attach(11);
+  Rackservo.attach(10);
   do {
     Rackservo.writeMicroseconds(0);//rack up
   } while (bit_is_set(PIND, PD2));
@@ -105,7 +106,7 @@ inline void RACKUP(){
   grabber = baseIn;
 }
 inline void BASEIN(){
-  BaseservoL.attach(10);
+  BaseservoL.attach(11);
   do {
     BaseservoL.write(0);
   } while (bit_is_set(PINC, PC0));

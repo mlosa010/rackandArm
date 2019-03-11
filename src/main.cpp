@@ -32,11 +32,8 @@ void takeADump();
 
 void setup() {
   Serial.begin(9600);              //  setup serial
-  Rackservo.attach(11,500,2400);  // attaches the servo on pin 9 to the servo object
-  Handservo.attach(9);
-  BaseservoL.attach(10);
-  Dumpservo.attach(5);
   Rackservo.writeMicroseconds(600);
+
 
     DDRD &= ~((1<<PD2)|(1<<PD3));
     DDRD |= ((1<<PD4)|(1<<PD5));
@@ -76,58 +73,52 @@ void loop() {
 //for those who dont know inline functions are simple code repacements like #defines
 //but they look like functions
 inline void BASEOUTE(){
+  BaseservoL.attach(10);
   do {
     BaseservoL.write(180);
-    Rackservo.writeMicroseconds(600);
-    Handservo.write(90);
   } while (bit_is_set(PINC, PC1));
+  BaseservoL.detach();
   grabber = RackDown;
 }
 inline void RACKDOWN(){
+  Rackservo.attach(11);
   do {
-    PORTD |= (1<<PD4);
-    BaseservoL.write(90);
     Rackservo.writeMicroseconds(2400);
-    Handservo.write(90);
   } while (bit_is_set(PIND, PD3));
+  Rackservo.detach();
   startInterval = millis();
-  PORTD &= ~(1<<PD4);
   grabber = handClosed;
 }
 inline void HANDCLOSED(){
+  Handservo.attach(9);
   do {
-    BaseservoL.write(90);
-    Rackservo.writeMicroseconds(600);
     Handservo.write(0);
   } while (millis() - startInterval < elapesdTime);
   grabber = rackUp;
 }
 inline void RACKUP(){
+  Rackservo.attach(11);
   do {
-    PORTD |= (1<<PD4);
-    BaseservoL.write(90);
     Rackservo.writeMicroseconds(0);//rack up
-    Handservo.write(90);//still
   } while (bit_is_set(PIND, PD2));
-  PORTD &= ~(1<<PD4);
+  Rackservo.detach();
   grabber = baseIn;
 }
 inline void BASEIN(){
-  PORTD &= ~(1<<PD4);
+  BaseservoL.attach(10);
   do {
     BaseservoL.write(0);
-    Rackservo.writeMicroseconds(600);
-    Handservo.write(90);
   } while (bit_is_set(PINC, PC0));
+  BaseservoL.detach();
   grabber = handOpen;
 }
 inline void HANDOPEN(){
+  Handservo.attach(9);
   startInterval = millis();
   do {
-    BaseservoL.write(90);
-    Rackservo.writeMicroseconds(600);
     Handservo.write(180);
   }while(millis() - startInterval < elapesdTime);
+  Handservo.detach();
   grabber = stop;
 }
 inline void STOP(){

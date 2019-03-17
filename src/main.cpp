@@ -10,7 +10,8 @@ char k;
 bool fflag = false;
 bool dflag = false;
 unsigned long startInterval = 0;
-unsigned long elapesdTime = 2000;
+unsigned long elapesdTime = 250;
+unsigned long grabTime =1000;
 unsigned long time = 0;
 int speed=0;
 
@@ -27,12 +28,18 @@ inline void RACKUP();
 inline void BASEIN();
 inline void HANDOPEN();
 inline void STOP();
+inline void DROPOBJ();
+inline void PUSHOBJ();
+inline void RETRACTPUSHER();
+inline void BASEIND();
+inline void BASEOUTD();
 void grabbingRoutine();
 void takeADump();
 
 void setup() {
   Serial.begin(9600);              //  setup serial
-  Rackservo.writeMicroseconds(600);
+  BaseservoR.attach(6);
+  BaseservoR.detach();
 
 
     DDRD &= ~((1<<PD2)|(1<<PD3));
@@ -73,17 +80,20 @@ void loop() {
 //for those who dont know inline functions are simple code repacements like #defines
 //but they look like functions
 inline void BASEOUTE(){
-  BaseservoL.attach(11);
+  BaseservoR.attach(5);
+  BaseservoL.attach(6);
   do {
-    BaseservoL.write(180);
+    BaseservoR.write(60);
+    BaseservoL.write(120);
   } while (bit_is_set(PINC, PC1));
   BaseservoL.detach();
+  BaseservoR.detach();
   grabber = RackDown;
 }
 inline void RACKDOWN(){
   Rackservo.attach(10);
   do {
-    Rackservo.writeMicroseconds(2400);
+    Rackservo.writeMicroseconds(2000);
   } while (bit_is_set(PINC, PC2));
   Rackservo.detach();
   startInterval = millis();
@@ -92,43 +102,120 @@ inline void RACKDOWN(){
 inline void HANDCLOSED(){
   Handservo.attach(9);
   do {
-    Handservo.write(0);
-  } while (millis() - startInterval < elapesdTime);
-  Handservo.detach();
+    Handservo.write(170);
+  } while (millis() - startInterval < grabTime);
+  //Handservo.detach();
   grabber = rackUp;
 }
 inline void RACKUP(){
   Rackservo.attach(10);
   do {
-    Rackservo.writeMicroseconds(0);//rack up
+    Handservo.write(170);
+    Rackservo.writeMicroseconds(500);//rack up
   } while (bit_is_set(PIND, PD2));
   Rackservo.detach();
+
   grabber = baseIn;
 }
 inline void BASEIN(){
-  BaseservoL.attach(11);
+  BaseservoR.attach(5);
+  BaseservoL.attach(6);
   do {
+    BaseservoR.write(180);
     BaseservoL.write(0);
   } while (bit_is_set(PINC, PC0));
+  Handservo.detach();
   BaseservoL.detach();
+  Handservo.detach();
   grabber = handOpen;
 }
 inline void HANDOPEN(){
   Handservo.attach(9);
   startInterval = millis();
   do {
-    Handservo.write(180);
+    Handservo.write(70);
   }while(millis() - startInterval < elapesdTime);
   Handservo.detach();
   grabber = stop;
 }
 inline void STOP(){
-  BaseservoL.write(90);
-  Rackservo.writeMicroseconds(600);
-  Handservo.write(90);
+  BaseservoL.detach();
+  Rackservo.detach();
+  Handservo.detach();
   fflag = true;
 }
 
+inline void STOPD(){
+  BaseservoL.detach();
+  Rackservo.detach();
+  Handservo.detach();
+  Dumpservo.attach(10);
+  startInterval = millis();
+  do{
+    Dumpservo.write(0);
+  }while(millis() - startInterval < elapesdTime);
+  Dumpservo.detach();
+  objDumped=0;
+  dflag = true;
+}
+
+inline void DROPOBJ(){
+  Handservo.attach(9);
+  startInterval = millis();
+  do {
+    Handservo.write(70);
+  }while(millis() - startInterval < elapesdTime);
+  objDumped++;
+  Handservo.detach();
+  dumper = BaseIn;
+}
+
+inline void PUSHOBJ(){
+  Dumpservo.attach(11);
+  startInterval = millis();
+  do{
+    Dumpservo.write(180);
+  }while(millis() - startInterval < elapesdTime);
+  Dumpservo.detach();
+  dumper = HandClosed;
+}
+
+inline void BASEIND(){
+  BaseservoR.attach(5);
+  BaseservoL.attach(6);
+  do {
+    BaseservoR.write(180);
+    BaseservoL.write(0);
+  } while (bit_is_set(PINC, PC0));
+  BaseservoR.detach();
+  BaseservoL.detach();
+  if(objDumped==2){
+    dumper =  pushObj;
+  }else if (objDumped==1){
+  dumper = HandClosed;
+}else
+  dumper=Stopp;
+}
+inline void BASEOUTD(){
+  BaseservoR.attach(5);
+  BaseservoL.attach(6);
+  do {
+    BaseservoR.write(60);
+    BaseservoL.write(120);
+  } while (bit_is_set(PINC, PC1));
+  BaseservoL.detach();
+  BaseservoR.detach();
+  dumper = HandOpen;
+
+}
+inline void HANDCLOSEDD(){
+  Handservo.attach(9);
+    do {
+      Handservo.write(180);
+    } while (millis() - startInterval < elapesdTime);
+    //Handservo.detach();
+    dumper = BaseOut;
+}
 
 //////////////////////define routines////////////////////////
 void grabbingRoutine() {
@@ -168,85 +255,37 @@ void grabbingRoutine() {
 void takeADump(){
 switch (dumper) {
   case Inital:
-  Serial.begin(9600);
-   dumper=BaseOut;
+   Serial.begin(9600);
+   dumper=HandOpen;
    break;
 
-  case BaseOut:
-  do {
-    BaseservoR.write(180);
-    BaseservoL.write(0);//move forward
-    Rackservo.write(90);//still
-    Handservo.write(90);//still
-  } while (bit_is_set(PINC, PC1));
-  dumper = HandOpen;
-  break;
-
   case HandOpen:
-  startInterval = millis();
-  do {
-    BaseservoR.write(90);
-    BaseservoL.write(90);
-    Rackservo.write(90);
-    Handservo.write(180);
-  }while(millis() - startInterval < elapesdTime);
-  objDumped++;
-  dumper = BaseIn;
+  DROPOBJ();
   break;
 
   case BaseIn:
-  do {
-    PORTD &= ~(1<<PD4);
-    BaseservoR.write(0);
-    BaseservoL.write(180);
-    Rackservo.write(90);
-    Handservo.write(90);
-  } while (bit_is_set(PINC, PC0));
-  if(objDumped==3){
-    dumper = Stopp;
-  }else
-  dumper = pushObj;
-  break;
-
-  case pushObj:
-  startInterval = millis();
-  do{
-    Dumpservo.write(0);
-    BaseservoR.write(90);
-    BaseservoL.write(90);
-    Rackservo.write(90);
-    Handservo.write(90);
-  }while(millis() - startInterval < elapesdTime);
-  dumper = HandClosed;
+  BASEIND();
   break;
 
   case HandClosed:
-    do {
-      PORTD &= ~(1<<PD4);
-      Dumpservo.write(180);
-      BaseservoL.write(90);
-      BaseservoR.write(90);
-      Rackservo.write(90);
-      Handservo.write(0);
-    } while (millis() - startInterval < elapesdTime);
-    dumper = BaseOut;
-    break;
+  HANDCLOSEDD();
+  break;
 
-    case Stopp:
-      Dumpservo.write(90);
-      BaseservoR.write(90);
-      BaseservoL.write(90);
-      Rackservo.write(90);
-      Handservo.write(90);
-      dflag = true;
-      break;
+  case BaseOut:
+  BASEOUTD();
+  break;
 
-      default:
-        Dumpservo.write(90);
-        BaseservoR.write(90);
-        BaseservoL.write(90);
-        Rackservo.write(90);
-        Handservo.write(90);
-        break;
+  case pushObj:
+  PUSHOBJ();
+  break;
+
+  case Stopp:
+  STOPD();
+  dflag = true;
+  break;
+
+  default:
+  STOPD();
+  break;
 }
 }

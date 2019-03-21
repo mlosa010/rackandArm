@@ -38,8 +38,11 @@ void takeADump();
 
 void setup() {
   Serial.begin(9600);              //  setup serial
-  BaseservoR.attach(6);
-  BaseservoR.detach();
+  //BaseservoL.detach();
+  //BaseservoR.detach();
+  //Rackservo.detach();
+  //Handservo.detach();
+
 
 
     DDRD &= ~((1<<PD2)|(1<<PD3));
@@ -101,8 +104,9 @@ inline void RACKDOWN(){
 }
 inline void HANDCLOSED(){
   Handservo.attach(9);
+  startInterval = millis();
   do {
-    Handservo.write(170);
+    Handservo.write(180);
   } while (millis() - startInterval < grabTime);
   //Handservo.detach();
   grabber = rackUp;
@@ -110,7 +114,6 @@ inline void HANDCLOSED(){
 inline void RACKUP(){
   Rackservo.attach(10);
   do {
-    Handservo.write(170);
     Rackservo.writeMicroseconds(500);//rack up
   } while (bit_is_set(PIND, PD2));
   Rackservo.detach();
@@ -124,9 +127,9 @@ inline void BASEIN(){
     BaseservoR.write(180);
     BaseservoL.write(0);
   } while (bit_is_set(PINC, PC0));
-  Handservo.detach();
+  //Handservo.detach();
   BaseservoL.detach();
-  Handservo.detach();
+  BaseservoR.detach();
   grabber = handOpen;
 }
 inline void HANDOPEN(){

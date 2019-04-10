@@ -10,7 +10,7 @@ char k;
 bool fflag = false;
 bool dflag = false;
 unsigned long startInterval = 0;
-unsigned long elapesdTime = 250;
+unsigned long elapesdTime = 100;
 unsigned long grabTime =1000;
 unsigned long time = 0;
 int speed=0;
@@ -64,6 +64,7 @@ void resetState()
 void loop() {
   Serial.println(grabber);
   Serial.print(dumper);
+  Serial.print("c \n");
 
   if(Serial.available()){
     k=Serial.read();
@@ -84,11 +85,11 @@ void loop() {
 //but they look like functions
 inline void BASEOUTE(){
   BaseservoR.attach(5);
-  BaseservoL.attach(6);
+  BaseservoL.attach(11);
   do {
     BaseservoR.write(60);
     BaseservoL.write(120);
-  } while (bit_is_set(PINC, PC1));
+  } while (bit_is_set(PINC, PC0));
   BaseservoL.detach();
   BaseservoR.detach();
   grabber = RackDown;
@@ -96,7 +97,7 @@ inline void BASEOUTE(){
 inline void RACKDOWN(){
   Rackservo.attach(10);
   do {
-    Rackservo.writeMicroseconds(2000);
+    Rackservo.writeMicroseconds(2400);
   } while (bit_is_set(PINC, PC2));
   Rackservo.detach();
   startInterval = millis();
@@ -106,7 +107,7 @@ inline void HANDCLOSED(){
   Handservo.attach(9);
   startInterval = millis();
   do {
-    Handservo.write(180);
+    Handservo.writeMicroseconds(1000);
   } while (millis() - startInterval < grabTime);
   //Handservo.detach();
   grabber = rackUp;
@@ -118,15 +119,15 @@ inline void RACKUP(){
   } while (bit_is_set(PIND, PD2));
   Rackservo.detach();
 
-  grabber = baseIn;
+  grabber = stop;
 }
 inline void BASEIN(){
   BaseservoR.attach(5);
-  BaseservoL.attach(6);
+  BaseservoL.attach(11);
   do {
     BaseservoR.write(180);
     BaseservoL.write(0);
-  } while (bit_is_set(PINC, PC0));
+  } while (bit_is_set(PINC, PC1));
   //Handservo.detach();
   BaseservoL.detach();
   BaseservoR.detach();
@@ -136,7 +137,7 @@ inline void HANDOPEN(){
   Handservo.attach(9);
   startInterval = millis();
   do {
-    Handservo.write(70);
+    Handservo.writeMicroseconds(2000);
   }while(millis() - startInterval < elapesdTime);
   Handservo.detach();
   grabber = stop;
@@ -149,14 +150,14 @@ inline void STOP(){
 }
 
 inline void STOPD(){
-  BaseservoL.detach();
-  Rackservo.detach();
-  Handservo.detach();
-  Dumpservo.attach(10);
+  //BaseservoL.detach();
+  //Rackservo.detach();
+  //Handservo.detach();
+  Dumpservo.attach(11);
   startInterval = millis();
   do{
     Dumpservo.write(0);
-  }while(millis() - startInterval < elapesdTime);
+  }while(millis() - startInterval <elapesdTime);
   Dumpservo.detach();
   objDumped=0;
   dflag = true;
@@ -166,7 +167,7 @@ inline void DROPOBJ(){
   Handservo.attach(9);
   startInterval = millis();
   do {
-    Handservo.write(70);
+    Handservo.write(180);
   }while(millis() - startInterval < elapesdTime);
   objDumped++;
   Handservo.detach();
@@ -174,7 +175,7 @@ inline void DROPOBJ(){
 }
 
 inline void PUSHOBJ(){
-  Dumpservo.attach(11);
+  Dumpservo.attach(6);
   startInterval = millis();
   do{
     Dumpservo.write(180);
@@ -185,27 +186,26 @@ inline void PUSHOBJ(){
 
 inline void BASEIND(){
   BaseservoR.attach(5);
-  BaseservoL.attach(6);
+  BaseservoL.attach(11);
   do {
     BaseservoR.write(180);
     BaseservoL.write(0);
-  } while (bit_is_set(PINC, PC0));
+  } while (bit_is_set(PINC, PC1));
   BaseservoR.detach();
   BaseservoL.detach();
-  if(objDumped==2){
-    dumper =  pushObj;
-  }else if (objDumped==1){
-  dumper = HandClosed;
-}else
-  dumper=Stopp;
+  //if(objDumped==1){
+  //  dumper =  pushObj;
+  //}else if (objDumped==2){
+  dumper = Stopp;
+//}
 }
 inline void BASEOUTD(){
   BaseservoR.attach(5);
-  BaseservoL.attach(6);
+  BaseservoL.attach(11);
   do {
     BaseservoR.write(60);
     BaseservoL.write(120);
-  } while (bit_is_set(PINC, PC1));
+  } while (bit_is_set(PINC, PC0));
   BaseservoL.detach();
   BaseservoR.detach();
   dumper = HandOpen;
@@ -214,7 +214,7 @@ inline void BASEOUTD(){
 inline void HANDCLOSEDD(){
   Handservo.attach(9);
     do {
-      Handservo.write(180);
+      Handservo.write(70);
     } while (millis() - startInterval < elapesdTime);
     //Handservo.detach();
     dumper = BaseOut;
